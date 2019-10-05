@@ -109,7 +109,7 @@ gen_statusbar() {
     ram
     time_clock
 
-    statusbar="$cmus_status | $mem_status | $cpu_temp_status | $power_status | $time_status | $wifi_status | $wifi_device_status"
+    statusbar="$cmus_status | $mem_status | $cpu_temp_status | $power_status | $wifi_status | $time_status | $wifi_device_status"
 }
 
 while true; do
