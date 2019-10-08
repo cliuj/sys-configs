@@ -1,0 +1,109 @@
+#!/bin/sh
+
+power_info() {
+    local battery_status
+    local battery_capacity
+    local battery_time_remaining
+    local battery_icon
+    local hourglass_icon=
+
+    battery_info=$(acpi -b)
+
+    IFS=, read battery_status battery_capacity battery_time_remaining <<< $battery_info
+
+    battery_status=$(echo $battery_status | cut -d ' ' -f 3)
+    battery_capacity=$(echo $battery_capacity | tr -d '%')
+    battery_time_remaining=$(echo $battery_time_remaining | cut -c 1-5)
+
+    if [ "$battery_status" = "Charging" ]; then
+        battery_icon=
+    else
+        if [ "$battery_capacity" -ge 90 ]; then
+            battery_icon=
+        elif [ "$battery_capacity" -ge 60 ]; then
+            battery_icon=
+        elif [ "$battery_capacity" -ge 35 ]; then
+            battery_icon=
+        elif [ "$battery_capacity" -ge 7 ]; then
+            battery_icon=
+        else
+            battery_icon=
+        fi
+    fi
+    power_status="$battery_icon $battery_capacity% | $hourglass_icon ($battery_time_remaining)"
+}
+
+cpu_temp() {
+    local cpu_temperature=$(sensors | grep "Package id 0:" | cut -d ' ' -f 5 | tr -d '+')
+    cpu_temp_status="CPU: $cpu_temperature"
+}
+
+cmus_music() {
+
+    local cmus_info="$(cmus-remote -Q 2>/dev/null)"
+    local playing_status="$(echo "$cmus_info" | grep status)"
+
+    case "$playing_status" in
+        *paused*) 
+            local music_icon=
+            local song=$(echo "$cmus_info" | grep file | rev | cut -d "/" -f 1 | rev | cut -d "." -f 1)
+            ;;
+        *playing*)
+            local music_icon=
+            local song=$(echo "$cmus_info" | grep file | rev | cut -d "/" -f 1 | rev | cut -d "." -f 1)
+            ;;
+        *)
+            local music_icon=
+            local song="Not playing"
+            ;;
+    esac
+    cmus_status="$music_icon $song"
+}
+
+wifi() {
+    local ssid=$(iw dev | grep "ssid" | cut -d ' ' -f 2 | cut -c 1-7)
+    local device_status=$(ip link | grep "state DOWN")
+    local wifi_icon=
+
+    if [ ! -z "$device_status" ]; then
+        wifi_icon=
+        ssid="Device is down"
+    else
+        if [ ! -z $ssid ]; then
+            if [ $(echo $ssid | wc -c) -ge 7 ]; then
+                local ellipsis="..."
+            else
+                local ellipsis=""
+            fi
+        else
+            wifi_icon=
+            ssid="Not connected"
+        fi
+    fi
+
+    wifi_status="$wifi_icon $ssid$ellipsis"
+    wifi_device_status="$status_icon"
+}
+
+time_clock() {
+    local clock_icon=
+    local time=$(date +"%I:%M%p")
+    time_status="$clock_icon $time"
+}
+
+gen_statusbar() {
+    wifi
+    power_info
+    cpu_temp
+    cmus_music
+    wifi
+    time_clock
+
+    statusbar="$cmus_status | $cpu_temp_status | $power_status | $wifi_status | $time_status"
+}
+
+while true; do
+    gen_statusbar
+    xsetroot -name "$statusbar"
+    sleep 5s
+done

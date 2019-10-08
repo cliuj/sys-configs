@@ -1,0 +1,3 @@
+function vol
+    alsamixer
+end
