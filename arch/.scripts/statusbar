@@ -100,21 +100,12 @@ gen_statusbar() {
     time_clock
 
     #statusbar="[ $cmus_status ][ $cpu_temp_status ][ $power_status ][ $wifi_status ][ $time_status ] "
-    statusbar="[ $cpu_temp_status ][ $power_status ][ $wifi_status ][ $time_status ] "
+    right_statusbar="[ $cpu_temp_status ][ $power_status ][ $wifi_status ][ $time_status ] "
+    left_statusbar="[ $cmus_status ]"
 }
-
-init_lemonbar() {
-    main_font="IBM Plex Mono"
-    font_awesome1="Font Awesome 5 Brands Regular"
-    font_awesome2="Font Awesome 5 Free Regular"
-    font_awesome3="Font Awesome 5 Free Solid"
-
-
-}
-
 
 while true; do
     gen_statusbar
-    xsetroot -name "[ $cmus_status ];$statusbar "
+    xsetroot -name "$left_statusbar;$right_statusbar "
     sleep 5s
 done
