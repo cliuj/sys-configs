@@ -30,7 +30,7 @@ set smarttab
 set autoindent
 
 " Set tabbing to 2 if using the following extensions
-autocmd Filetype html,javascript,vue,json,ruby,css,eex,exs,ex,vim,tex :setlocal tabstop=2 shiftwidth=2 expandtab smarttab autoindent 
+autocmd Filetype html,javascript,vue,json,ruby,css,eex,exs,ex,vim,tex,Dockerfile,yaml :setlocal tabstop=2 shiftwidth=2 expandtab smarttab autoindent 
 autocmd Filetype tex,txt :setlocal nonumber | :Goyo
 
 " Highlight colors for {} [] ()
