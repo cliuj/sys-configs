@@ -1,0 +1,66 @@
+#!/bin/sh
+
+power_info() {
+
+    local apm_info
+    set -A apm_info -- $(apm -alm)
+    
+    local percent=${apm_info[0]}
+    local time=${apm_info[1]}
+    local state=${apm_info[2]}
+
+    local state_icon
+    local time_icon=
+    local hour_float="$(awk "BEGIN {printf \"%.2f\n\", ${time}/60}")"
+    local IFS='.'; read hr min_float <<-EOF
+$hour_float
+EOF
+
+    local min=$(awk "BEGIN {printf \"%.0f\n\", .${min_float}*60}")
+    local time_state="${hr}:${min}"
+    
+    if [ "${state}" -eq 1  ]; then
+        state_icon=
+        time_state="Charging"
+    else
+        if [ "${percent}" -ge 90 ]; then
+            state_icon=
+        elif [ "${percent}" -ge 60 ]; then
+            state_icon=
+        elif [ "${percent}" -ge 35 ]; then
+            state_icon=
+        elif [ "${percent}" -ge 7 ]; then
+            state_icon=
+        else
+            state_icon=
+        fi
+    fi
+
+    power_status="${state_icon} ${percent}% | ${time_icon} (${time_state})"
+}
+
+cpu_temp() {
+    local cpu_temperature=$(sysctl hw.sensors.cpu0.temp0 | cut -d '=' -f 2 | cut -d '.' -f 1)
+    cpu_temp_status="CPU: ${cpu_temperature}°C"
+}
+
+time_clock() {
+    local clock_icon=
+    local time=$(date +"%I:%M%p")
+    time_status="${clock_icon} ${time}"
+}
+
+gen_statusbar() {
+    power_info
+    cpu_temp
+    time_clock
+    left_statusbar="left statusbar placeholder"
+    right_statusbar="[ ${cpu_temp_status} ] [ ${power_status} ] [ ${time_status} ]  "
+}
+
+while true; do
+    gen_statusbar
+    xsetroot -name "${left_statusbar};${right_statusbar} "
+    sleep 10
+done
+
