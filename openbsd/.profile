@@ -8,5 +8,5 @@ export PATH HOME TERM
 export LC_CTYPE="en_US.UTF-8"
 
 # ksh related
-export ENV="${HOME}/.ksh-alias"
+export ENV="${HOME}/.kshrc"
 . "${HOME}/.kshrc"

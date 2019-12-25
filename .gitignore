@@ -1,7 +1,1 @@
-arch/.cache
-arch/.config/Slack
-arch/.config/dconf
-arch/.config/fish/fish_variables
-arch/.config/htop
-arch/.vim/*
-arch/.vim/vimrc
+*
