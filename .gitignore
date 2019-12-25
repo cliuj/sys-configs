@@ -1,8 +1,10 @@
 /*
 !.gitignore
+
 !.tmux.conf
 !.xinitrc
 !.Xresources
 !.Xmodmap
 !vimrc
 !dwm-patches
+!/openbsd
