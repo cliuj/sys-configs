@@ -1,5 +1,0 @@
-alias wal="${HOME}/.local/bin/wal"
-alias t="tmux"
-alias ta="tmux attach"
-alias tl="tmux ls"
-alias poweroff="shutdown -p now"
