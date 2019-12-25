@@ -1,0 +1,12 @@
+#!/bin/sh
+
+printf "Disable the laptop's monitor? [Y/n] "
+read disable
+
+case "${disable}" in
+    y|Y|"") screen="--off"; brightness=0;;
+    *) screen="--auto"; brightness=40;;
+esac
+
+xrandr --output eDP-1 ${screen} --output VGA-1 --auto --left-of eDP-1 --rotate right --output DP-1 --auto --left-of VGA-1
+xbacklight -set ${brightness}
