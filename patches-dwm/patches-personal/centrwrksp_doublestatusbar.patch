@@ -1,0 +1,133 @@
+diff --git a/dwm.c b/dwm.c
+index 4465af1..c87b9f8 100644
+--- a/dwm.c
++++ b/dwm.c
+@@ -236,7 +236,9 @@ static void zoom(const Arg *arg);
+ 
+ /* variables */
+ static const char broken[] = "broken";
+-static char stext[256];
++static char xsetroot_text[512];
++static char right_text[256];
++static char left_text[256];
+ static int screen;
+ static int sw, sh;           /* X display screen geometry width, height */
+ static int bh, blw = 0;      /* bar geometry */
+@@ -430,17 +432,17 @@ buttonpress(XEvent *e)
+ 		focus(NULL);
+ 	}
+ 	if (ev->window == selmon->barwin) {
+-		i = x = 0;
++		i = 0;
++		const int worksp_x = x = (m->ww - TEXTW(tags[0]) * 9) / 2;
++		const int lt_x = worksp_x - TEXTW(m->ltsymbol);
+ 		do
+ 			x += TEXTW(tags[i]);
+ 		while (ev->x >= x && ++i < LENGTH(tags));
+-		if (i < LENGTH(tags)) {
++		if (i < LENGTH(tags) && ev->x >= worksp_x) {
+ 			click = ClkTagBar;
+ 			arg.ui = 1 << i;
+-		} else if (ev->x < x + blw)
++		} else if (ev->x <= worksp_x && ev->x >= lt_x)
+ 			click = ClkLtSymbol;
+-		else if (ev->x > selmon->ww - TEXTW(stext))
+-			click = ClkStatusText;
+ 		else
+ 			click = ClkWinTitle;
+ 	} else if ((c = wintoclient(ev->window))) {
+@@ -701,19 +703,14 @@ drawbar(Monitor *m)
+ 	unsigned int i, occ = 0, urg = 0;
+ 	Client *c;
+ 
+-	/* draw status first so it can be overdrawn by tags later */
+-	if (m == selmon) { /* status is only drawn on selected monitor */
+-		drw_setscheme(drw, scheme[SchemeNorm]);
+-		sw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
+-		drw_text(drw, m->ww - sw, 0, sw, bh, 0, stext, 0);
+-	}
+-
+ 	for (c = m->clients; c; c = c->next) {
+ 		occ |= c->tags;
+ 		if (c->isurgent)
+ 			urg |= c->tags;
+ 	}
+-	x = 0;
++
++	/* for workspaces  */
++	const int worksp_x = x = (m->ww - TEXTW(tags[0]) * 9) / 2;
+ 	for (i = 0; i < LENGTH(tags); i++) {
+ 		w = TEXTW(tags[i]);
+ 		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
+@@ -724,21 +721,35 @@ drawbar(Monitor *m)
+ 				urg & 1 << i);
+ 		x += w;
+ 	}
++
++	/* add blank space padding */
++	drw_setscheme(drw, scheme[SchemeNorm]);
++	drw_rect(drw, x, 0, m->ww - sw - x, bh, 1, 1);
++
++	/* for layout tile*/
+ 	w = blw = TEXTW(m->ltsymbol);
++	const int lt_x = x = worksp_x - w;
+ 	drw_setscheme(drw, scheme[SchemeNorm]);
+-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+-
+-	if ((w = m->ww - sw - x) > bh) {
+-		if (m->sel) {
+-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
+-			if (m->sel->isfloating)
+-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+-		} else {
+-			drw_setscheme(drw, scheme[SchemeNorm]);
+-			drw_rect(drw, x, 0, w, bh, 1, 1);
+-		}
++	drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
++
++	/* add blank space padding */
++	x = 0;
++	drw_setscheme(drw, scheme[SchemeNorm]);
++	drw_rect(drw, x, 0, lt_x, bh, 1, 1);
++
++	/* draw status first so it can be overdrawn by tags later */
++	/* status is only drawn on selected monitor */
++	if (m == selmon) {
++		/* for statusbar on the right */
++		drw_setscheme(drw, scheme[SchemeNorm]);
++		sw = TEXTW(right_text) - lrpad;
++		drw_text(drw, m->ww - sw, 0, sw, bh, 0, right_text, 0);
++
++		/* for statusbar on the left */
++		drw_setscheme(drw, scheme[SchemeNorm]);
++		drw_text(drw, 0, 0, lt_x, bh, 0, left_text, 0);
+ 	}
++
+ 	drw_map(drw, m->barwin, 0, 0, m->ww, bh);
+ }
+ 
+@@ -1987,8 +1998,21 @@ updatesizehints(Client *c)
+ void
+ updatestatus(void)
+ {
+-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
+-		strcpy(stext, "dwm-"VERSION);
++	if (!gettextprop(root, XA_WM_NAME, xsetroot_text, sizeof(xsetroot_text))) {
++		strcpy(xsetroot_text, "dwm");
++		strncpy(right_text, xsetroot_text, sizeof(xsetroot_text));
++		left_text[0] = '\0';
++	} else {
++		char *e = strchr(xsetroot_text, ';');
++		if (e) {
++		    *e = '\0';
++		    e++;
++		    strncpy(right_text, e, sizeof(right_text) - 1);
++		} else {
++		    left_text[0] = '\0';
++		}
++		strncpy(left_text, xsetroot_text, sizeof(left_text) - 1);
++	}
+ 	drawbar(selmon);
+ }
+ 
