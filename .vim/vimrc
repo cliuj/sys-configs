@@ -19,6 +19,7 @@ syntax on
 set t_Co=256
 
 set number
+set background=dark
 
 " Backspace
 set backspace=indent,eol,start
@@ -50,20 +51,20 @@ nnoremap <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> 
 \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
 " Change cursor to beam when entering insert mode
-let &t_SI = "\<esc>[5 q"
-let &t_SR = "\<esc>[5 q"
-let &t_EI = "\<esc>[2 q"
+"let &t_SI = "\<esc>[5 q"
+"let &t_SR = "\<esc>[5 q"
+"let &t_EI = "\<esc>[2 q"
 
 " tmux change cursor
-if exists('$TMUX')
-  let &t_SI .= "\<Esc>Ptmux;\<Esc>\<Esc>[5 q\<Esc>\\"
-  let &t_EI .= "\<Esc>Ptmux;\<Esc>\<Esc>[2 q\<Esc>\\"
-  autocmd VimLeave * silent !echo -ne "\033Ptmux;\033\033[0 q\033\\"
-else
-  let &t_SI .= "\<Esc>[5 q"
-  let &t_EI .= "\<Esc>[2 q"
-  autocmd VimLeave * silent !echo -ne "\033[0 q"
-endif
+"if exists('$TMUX')
+"  let &t_SI .= "\<Esc>Ptmux;\<Esc>\<Esc>[5 q\<Esc>\\"
+"  let &t_EI .= "\<Esc>Ptmux;\<Esc>\<Esc>[2 q\<Esc>\\"
+"  autocmd VimLeave * silent !echo -ne "\033Ptmux;\033\033[0 q\033\\"
+"else
+"  let &t_SI .= "\<Esc>[5 q"
+"  let &t_EI .= "\<Esc>[2 q"
+"  autocmd VimLeave * silent !echo -ne "\033[0 q"
+"endif
 
 "Remap Shift-j to move down 1 paragraph
 map <S-j> }

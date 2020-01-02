@@ -5,7 +5,7 @@
 !.xinitrc
 !.Xresources
 !.Xmodmap
-!vimrc
 !patches-dwm
 !patches-dmenu
 !/openbsd
+!/.vim
