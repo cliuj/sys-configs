@@ -1,6 +1,9 @@
 /*
 !.gitignore
 
+!install
+!remove
+!common_paths
 !.tmux.conf
 !.xinitrc
 !.Xresources

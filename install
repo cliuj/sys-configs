@@ -1,0 +1,47 @@
+#!/bin/sh
+
+THIS_SCRIPT_LOC="$(pwd)"
+COMMON_PATHS="${THIS_SCRIPT_LOC}/common_paths"
+
+
+errnexit() { echo "${1}"; >&2; exit 1 }
+
+create_needed_dirs() {
+    mkdir -p ".config" ".cache" ".vim"
+}
+
+link_files() {
+    INPUT_FILE="${1}"
+    SOURCE_BASEDIR="${2}"
+    TARGET_BASEDIR="${3}"
+
+    create_needed_dirs
+
+    while IFS= read -r line_path; do
+        local ACTION="[Symlinking]"
+        local SOURCE_PATH="${SOURCE_BASEDIR}/${line_path}"
+        local TARGET_LINK="${TARGET_BASEDIR}/${line_path}"
+        echo "${ACTION} ${SOURCE_PATH} -> ${TARGET_LINK}"
+        #ln -s "${SOURCE_PATH}" "${TARGET_LINK}" \
+        #|| errnexit "Failed to symlink ${SOURCE_PATH} -> ${TARGET_LINK}"
+    done < "${INPUT_FILE}"
+}
+
+link_os_specific(){
+    local OS="${1}"
+    case "${OS}" in
+        "openbsd")
+            echo "Setting up configs for ${OS}"
+            OS_CONFIG_DIR="${THIS_SCRIPT_LOC}/${OS}"
+            link_files "${OS_CONFIG_DIR}/link_paths" "${OS_CONFIG_DIR}" "${HOME}"
+            ;;
+        *)
+            ;;
+    esac
+}
+
+run() {
+
+    link_files "${COMMON_PATHS}" "${THIS_SCRIPT_LOC}" "${HOME}"
+    link_os_specific "${1}"
+}
