@@ -7,7 +7,16 @@ COMMON_PATHS="${THIS_SCRIPT_LOC}/common_paths"
 errnexit() { echo "${1}"; >&2; exit 1 }
 
 create_needed_dirs() {
+    # These are the dirs needed for the symbolic links
     mkdir -p ".config" ".cache" ".vim"
+
+    mkdir -p "SrcPackages" \
+        "Downloads" \
+        "Development/projects" \
+        "Development/opensrc" \
+        "Development/sandbox" \
+        "Images" \
+        "Music"
 }
 
 link_files() {
@@ -41,7 +50,8 @@ link_os_specific(){
 }
 
 run() {
-
     link_files "${COMMON_PATHS}" "${THIS_SCRIPT_LOC}" "${HOME}"
     link_os_specific "${1}"
 }
+
+run "${1}"
