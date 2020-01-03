@@ -2,13 +2,13 @@
 !.gitignore
 
 !setup
-!remove
 !common_paths
 !home_dirs
 !.tmux.conf
 !.xinitrc
 !.Xresources
 !.Xmodmap
+!.config
 !patches-dwm
 !patches-dmenu
 !/openbsd
