@@ -1,33 +1,56 @@
 #!/bin/sh
 
+DRYRUN=1
+
 SCRIPT_LOGS="setup.log"
 THIS_SCRIPT_LOC="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
+
 COMMON_PATHS="${THIS_SCRIPT_LOC}/common_paths"
 HOME_DIRS="${THIS_SCRIPT_LOC}/home_dirs"
+
 SYMLINKING="[Symlink]"
 DELINKING="[Delink]"
 CREATEDIRS="[CreateDir]"
+STARTING="[Starting]"
+FINISHED="[Finished]"
 
-errnexit() { echo "[Error] ${1}\n[Finished]" | tee -a "${SCRIPT_LOGS}"; exit 1; }
+errnexit() { echo "[Error] ${1}\n${FINISHED}" | tee -a "${SCRIPT_LOGS}"; exit 1; }
 log() { echo "[Log] ${1}" | tee -a "${SCRIPT_LOGS}"; }
 warn() { echo "[Warning] ${1}" | tee -a "${SCRIPT_LOGS}"; }
 
 link_file() {
-    log "${SYMLINKING} ${1} -> ${2}"
-    ln -s "${1}" "${2}" \
-    || errnexit "Failed to symlink ${1} -> ${2}"
+    local SOURCE_PATH="${1}"
+    local TARGET_PATH="${2}"
+    
+    # If the source_path is a dir, then link to the dir before it
+    # i.e $HOME/.config/test_dir -> $HOME/.config
+    if [ -d "${SOURCE_PATH}" ]; then
+        TARGET_PATH="$(echo ${TARGET_PATH} | sed 's|\(.*\)/.*|\1|')"
+    fi
+    
+    log "${SYMLINKING} ${SOURCE_PATH} -> ${TARGET_PATH}"
+
+    if [ ${DRYRUN} -eq 0 ]; then
+        #ln -s "${1}" "${2}" \
+        #|| errnexit "Failed to symlink ${1} -> ${2}"
+    fi
 }
 
 delink_file() {
     log "${DELINKING} -/> ${1}"
-    rm -rf "${1}" \
-    || errnexit "Failed to remove symlink ${1}"
+    if [ ${DRYRUN} -eq 0 ]; then
+        #rm -rf "${1}" \
+        #|| errnexit "Failed to remove symlink ${1}"
+    fi
+
 }
 
 create_dir() {
     log "${CREATEDIRS} ${1}"
-    mkdir -p "${1}" \
-    || errnexit "Failed to create ${1}"
+    if [ ${DRYRUN} -eq 0 ]; then
+        #mkdir -p "${1}" \
+        #|| errnexit "Failed to create ${1}"
+    fi
 }
 
 run_action() {
@@ -41,17 +64,17 @@ run_action() {
             SOURCE_PATH="${SOURCE_BASEDIR}/${line_path}"
         fi
 
-        local TARGET_LINK="${TARGET_BASEDIR}/${line_path}"
+        local TARGET_PATH="${TARGET_BASEDIR}/${line_path}"
         
         case "${ACTION}" in
             "${SYMLINKING}")
-                link_file "${SOURCE_PATH}" "${TARGET_LINK}"
+                link_file "${SOURCE_PATH}" "${TARGET_PATH}"
                 ;;
             "${DELINKING}")
-                delink_file "${TARGET_LINK}"
+                delink_file "${TARGET_PATH}"
                 ;;
             "${CREATEDIRS}")
-                create_dir "${TARGET_LINK}"
+                create_dir "${TARGET_PATH}"
                 ;;
             *)
                 ;;
@@ -91,7 +114,8 @@ run() {
     
     shift
     while [ $# -gt 0 ]; do
-        log "${ACTION} for ${1} with SOURCE_BASEDIR: ${SOURCE_BASEDIR} and TARGET_BASEDIR: ${TARGET_BASEDIR}"
+        log "${STARTING} ${ACTION} for ${1} with:\n\
+            SOURCE_BASEDIR: '${SOURCE_BASEDIR}' and TARGET_BASEDIR: '${TARGET_BASEDIR}'"
         case "${1}" in
             "base")
                 run_action "${COMMON_PATHS}" "${ACTION}" "${SOURCE_BASEDIR}" "${TARGET_BASEDIR}"
@@ -104,9 +128,10 @@ run() {
                 warn "Unknown arg '${1}', skipping and moving on"
                 ;;
         esac
+        log "${FINISHED} ${ACTION} for ${1}"
         shift
     done
-    echo "[Finished]" | tee -a "${SCRIPT_LOGS}"
+    echo "${FINISHED}" | tee -a "${SCRIPT_LOGS}"
     echo "" | tee -a "${SCRIPT_LOGS}"
 }
 

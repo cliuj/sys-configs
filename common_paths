@@ -1,6 +1,6 @@
 .Xmodmap
 .Xresources
 .xinitrc
-.config/compton/
+.config/compton
 .tmux.conf
 .vim/vimrc
