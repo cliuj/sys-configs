@@ -1,57 +1,123 @@
 #!/bin/sh
 
-THIS_SCRIPT_LOC="$(pwd)"
+SCRIPT_LOGS="setup.log"
+THIS_SCRIPT_LOC="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 COMMON_PATHS="${THIS_SCRIPT_LOC}/common_paths"
+HOME_DIRS="${THIS_SCRIPT_LOC}/home_dirs"
+SYMLINKING="[Symlink]"
+DELINKING="[Delink]"
+CREATEDIRS="[CreateDir]"
 
+errnexit() { echo "[Error] ${1}" |& tee -a "${SCRIPT_LOGS}"; exit 1; }
+log() { echo "[Log] ${1}" |& tee -a "${SCRIPT_LOGS}" }
 
-errnexit() { echo "${1}"; >&2; exit 1 }
-
-create_needed_dirs() {
-    # These are the dirs needed for the symbolic links
-    mkdir -p ".config" ".cache" ".vim"
-
-    mkdir -p "SrcPackages" \
-        "Downloads" \
-        "Development/projects" \
-        "Development/opensrc" \
-        "Development/sandbox" \
-        "Images" \
-        "Music"
+link_file() {
+    log "${SYMLINKING} ${1} -> ${2}"
+    ln -s "${1}" "${2}" \
+    || errnexit "Failed to symlink ${1} -> ${2}"
 }
 
-link_files() {
-    INPUT_FILE="${1}"
-    SOURCE_BASEDIR="${2}"
-    TARGET_BASEDIR="${3}"
+delink_file() {
+    log "${DELINKING} -/> ${1}"
+    rm -rf "${1}" \
+    || errnexit "Failed to remove symlink ${1}"
+}
 
-    create_needed_dirs
+create_dir() {
+    log "${CREATEDIRS} ${1}"
+    mkdir -p "${1}"
+    || errnexit "Failed to create ${1}"
+}
+
+run_action() {
+    local ACTION="${2}"
+    local SOURCE_BASEDIR="${3}"
+    local TARGET_BASEDIR="${4}"
 
     while IFS= read -r line_path; do
-        local ACTION="[Symlinking]"
-        local SOURCE_PATH="${SOURCE_BASEDIR}/${line_path}"
+        local SOURCE_PATH=""
+        if [ "${SOURCE_BASEDIR}" = "--" ]; then
+            SOURCE_PATH="${SOURCE_BASEDIR}/${line_path}"
+        fi
+
         local TARGET_LINK="${TARGET_BASEDIR}/${line_path}"
-        echo "${ACTION} ${SOURCE_PATH} -> ${TARGET_LINK}"
-        #ln -s "${SOURCE_PATH}" "${TARGET_LINK}" \
-        #|| errnexit "Failed to symlink ${SOURCE_PATH} -> ${TARGET_LINK}"
-    done < "${INPUT_FILE}"
+        
+        case "${ACTION}" in
+            "${SYMLINKING}")
+                link_file "${SOURCE_PATH}" "${TARGET_LINK}"
+                ;;
+            "${DELINKING}")
+                delink_file "${TARGET_LINK}"
+                ;;
+            "${CREATEDIRS}")
+                create_dir "${TARGET_LINK}"
+                ;;
+            *)
+                ;;
+        esac
+    done < "${1}"
 }
 
-link_os_specific(){
-    local OS="${1}"
+install_type() {
+    local type="${1}"
     case "${OS}" in
         "openbsd")
-            echo "Setting up configs for ${OS}"
+            log "Setting up configs for ${OS}"
             OS_CONFIG_DIR="${THIS_SCRIPT_LOC}/${OS}"
-            link_files "${OS_CONFIG_DIR}/link_paths" "${OS_CONFIG_DIR}" "${HOME}"
-            ;;
-        *)
             ;;
     esac
 }
 
-run() {
-    link_files "${COMMON_PATHS}" "${THIS_SCRIPT_LOC}" "${HOME}"
-    link_os_specific "${1}"
+parse_action() {
+    
 }
 
-run "${1}"
+run() {
+
+    log "===[Setting up $(date +%F[%T])]==="
+    if [ $# -eq 0]; then
+        errnexit 'Need to pass an action i.e "install", "remove"'
+    fi
+    
+    local ACTION=""
+    local SOURCE_PATH="${THIS_SCRIPT_LOC}"
+    
+    case "${1}" in
+        "install")
+            ACTION="${SYMLINKING}"
+            ;;
+        "remove")
+            ACTION="${DELINKING}"
+            SOURCE_PATH="--"
+            ;;
+        *)
+            errnexit "Invalid action passed"
+            ;;
+    esac
+
+    if [ "${1}" = "install" ]; then
+        log "Creating necessary dirs"
+        run_action "${HOME_DIRS}" "${CREATEDIRS}" "--" "${HOME}"
+    fi
+
+    if [ $# -ge 1 ]; then
+        shift
+        
+        while [ $# -gt 0 ]; do
+            log "${ACTION} for ${1} with SOURCE_BASEDIR: ${SOURCE_BASEDIR} and TARGET_BASEDIR: ${TARGET_BASEDIR}"
+            case "${1}" in
+                "base")
+                    run_action "${COMMON_PATHS}" "${ACTION}" "${SOURCE_BASEDIR}" "${TARGET_BASEDIR}"
+                    ;;
+                "openbsd")
+                    local OS_SPECIFIC_PATHS="${SOURCE_BASEDIR}/openbsd/link_paths"
+                    run_action "${COMMON_PATHS}" "${ACTION}" "${OS_SPECIFIC_PATHS}" "${TARGET_BASEDIR}"
+                    ;;
+                *)
+                    log "Unknown arg '${1}' passed, skipping and moving on"
+                    ;;
+            esac
+        done
+    fi
+    log "===[Finished]===\n"
+}
