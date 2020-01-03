@@ -26,7 +26,7 @@ delink_file() {
 
 create_dir() {
     log "${CREATEDIRS} ${1}"
-    mkdir -p "${1}"
+    mkdir -p "${1}" \
     || errnexit "Failed to create ${1}"
 }
 
