@@ -31,25 +31,27 @@ link_file() {
     log "${SYMLINKING} ${SOURCE_PATH} -> ${TARGET_PATH}"
 
     if [ ${DRYRUN} -eq 0 ]; then
-        ln -s "${1}" "${2}" \
-        || errnexit "Failed to symlink ${1} -> ${2}"
+        ln -s "${SOURCE_PATH}" "${TARGET_PATH}" \
+        || errnexit "Failed to symlink ${SOURCE_PATH} -> ${TARGET_PATH}"
     fi
 }
 
 delink_file() {
-    log "${DELINKING} -/> ${1}"
+    local TARGET_PATH="${1}"
+    log "${DELINKING} -/> ${TARGET_PATH}"
     if [ ${DRYRUN} -eq 0 ]; then
-        rm -rf "${1}" \
-        || errnexit "Failed to remove symlink ${1}"
+        rm -rf "${TARGET_PATH}" \
+        || errnexit "Failed to remove symlink ${TARGET_PATH}"
     fi
 
 }
 
 create_dir() {
-    log "${CREATEDIRS} ${1}"
+    local TARGET_PATH="${1}"
+    log "${CREATEDIRS} ${TARGET_PATH}"
     if [ ${DRYRUN} -eq 0 ]; then
-        mkdir -p "${1}" \
-        || errnexit "Failed to create ${1}"
+        mkdir -p "${TARGET_PATH}" \
+        || errnexit "Failed to create ${TARGET_PATH}"
     fi
 }
 
