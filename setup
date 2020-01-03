@@ -31,16 +31,16 @@ link_file() {
     log "${SYMLINKING} ${SOURCE_PATH} -> ${TARGET_PATH}"
 
     if [ ${DRYRUN} -eq 0 ]; then
-        #ln -s "${1}" "${2}" \
-        #|| errnexit "Failed to symlink ${1} -> ${2}"
+        ln -s "${1}" "${2}" \
+        || errnexit "Failed to symlink ${1} -> ${2}"
     fi
 }
 
 delink_file() {
     log "${DELINKING} -/> ${1}"
     if [ ${DRYRUN} -eq 0 ]; then
-        #rm -rf "${1}" \
-        #|| errnexit "Failed to remove symlink ${1}"
+        rm -rf "${1}" \
+        || errnexit "Failed to remove symlink ${1}"
     fi
 
 }
@@ -48,8 +48,8 @@ delink_file() {
 create_dir() {
     log "${CREATEDIRS} ${1}"
     if [ ${DRYRUN} -eq 0 ]; then
-        #mkdir -p "${1}" \
-        #|| errnexit "Failed to create ${1}"
+        mkdir -p "${1}" \
+        || errnexit "Failed to create ${1}"
     fi
 }
 
