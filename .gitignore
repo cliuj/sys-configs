@@ -1,7 +1,7 @@
 /*
 !.gitignore
 
-!install
+!setup
 !remove
 !common_paths
 !home_dirs

@@ -8,8 +8,9 @@ SYMLINKING="[Symlink]"
 DELINKING="[Delink]"
 CREATEDIRS="[CreateDir]"
 
-errnexit() { echo "[Error] ${1}" |& tee -a "${SCRIPT_LOGS}"; exit 1; }
-log() { echo "[Log] ${1}" |& tee -a "${SCRIPT_LOGS}" }
+errnexit() { echo "[Error] ${1}\n[Finished]" | tee -a "${SCRIPT_LOGS}"; exit 1; }
+log() { echo "[Log] ${1}" | tee -a "${SCRIPT_LOGS}"; }
+warn() { echo "[Warning] ${1}" | tee -a "${SCRIPT_LOGS}"; }
 
 link_file() {
     log "${SYMLINKING} ${1} -> ${2}"
@@ -36,7 +37,7 @@ run_action() {
 
     while IFS= read -r line_path; do
         local SOURCE_PATH=""
-        if [ "${SOURCE_BASEDIR}" = "--" ]; then
+        if [ ! "${SOURCE_BASEDIR}" = "--" ]; then
             SOURCE_PATH="${SOURCE_BASEDIR}/${line_path}"
         fi
 
@@ -58,29 +59,17 @@ run_action() {
     done < "${1}"
 }
 
-install_type() {
-    local type="${1}"
-    case "${OS}" in
-        "openbsd")
-            log "Setting up configs for ${OS}"
-            OS_CONFIG_DIR="${THIS_SCRIPT_LOC}/${OS}"
-            ;;
-    esac
-}
-
-parse_action() {
-    
-}
-
 run() {
+    echo "[Setting up $(date +%F@[%T])]" | tee -a "${SCRIPT_LOGS}"
 
-    log "===[Setting up $(date +%F[%T])]==="
-    if [ $# -eq 0]; then
-        errnexit 'Need to pass an action i.e "install", "remove"'
+    if [ $# -lt 2 ]; then
+        errnexit "Passed argument count is less than 2\n \
+        Need to pass an action i.e 'install' and a install type i.e 'base'"
     fi
-    
+
     local ACTION=""
-    local SOURCE_PATH="${THIS_SCRIPT_LOC}"
+    local SOURCE_BASEDIR="${THIS_SCRIPT_LOC}"
+    local TARGET_BASEDIR="${HOME}"
     
     case "${1}" in
         "install")
@@ -88,7 +77,7 @@ run() {
             ;;
         "remove")
             ACTION="${DELINKING}"
-            SOURCE_PATH="--"
+            SOURCE_BASEDIR="--"
             ;;
         *)
             errnexit "Invalid action passed"
@@ -99,25 +88,26 @@ run() {
         log "Creating necessary dirs"
         run_action "${HOME_DIRS}" "${CREATEDIRS}" "--" "${HOME}"
     fi
-
-    if [ $# -ge 1 ]; then
+    
+    shift
+    while [ $# -gt 0 ]; do
+        log "${ACTION} for ${1} with SOURCE_BASEDIR: ${SOURCE_BASEDIR} and TARGET_BASEDIR: ${TARGET_BASEDIR}"
+        case "${1}" in
+            "base")
+                run_action "${COMMON_PATHS}" "${ACTION}" "${SOURCE_BASEDIR}" "${TARGET_BASEDIR}"
+                ;;
+            "openbsd")
+                local OS_SPECIFIC_PATHS="${THIS_SCRIPT_LOC}/${1}/link_paths"
+                run_action "${OS_SPECIFIC_PATHS}" "${ACTION}" "${SOURCE_BASEDIR}/${1}" "${TARGET_BASEDIR}"
+                ;;
+            *)
+                warn "Unknown arg '${1}', skipping and moving on"
+                ;;
+        esac
         shift
-        
-        while [ $# -gt 0 ]; do
-            log "${ACTION} for ${1} with SOURCE_BASEDIR: ${SOURCE_BASEDIR} and TARGET_BASEDIR: ${TARGET_BASEDIR}"
-            case "${1}" in
-                "base")
-                    run_action "${COMMON_PATHS}" "${ACTION}" "${SOURCE_BASEDIR}" "${TARGET_BASEDIR}"
-                    ;;
-                "openbsd")
-                    local OS_SPECIFIC_PATHS="${SOURCE_BASEDIR}/openbsd/link_paths"
-                    run_action "${COMMON_PATHS}" "${ACTION}" "${OS_SPECIFIC_PATHS}" "${TARGET_BASEDIR}"
-                    ;;
-                *)
-                    log "Unknown arg '${1}' passed, skipping and moving on"
-                    ;;
-            esac
-        done
-    fi
-    log "===[Finished]===\n"
+    done
+    echo "[Finished]" | tee -a "${SCRIPT_LOGS}"
+    echo "" | tee -a "${SCRIPT_LOGS}"
 }
+
+run "$@"
