@@ -4,6 +4,7 @@
 !install
 !remove
 !common_paths
+!home_dirs
 !.tmux.conf
 !.xinitrc
 !.Xresources
