@@ -1,0 +1,93 @@
+#!/bin/sh
+
+MUSIC_DIR="${HOME}/Music"
+PLAYLIST_DIR="${MUSIC_DIR}/playlists"
+URL_GRABBER='s|.*<\(.*\)>.*|\1|'
+
+errnexit() { echo "$1"; >&2; exit 1; }
+
+strict_opt() {
+    
+}
+
+# Choose options
+choose_option() {
+#auto
+    dmenu -l 3 -p "Options:"<<-EOF
+stream
+file
+kill
+EOF
+}
+
+# Choose whether to stream a single track or a playlist
+choose_stream_type() {
+    dmenu -l 2 -p "Stream type: "<<-EOF
+single
+playlist
+EOF
+}
+
+choose_volume() {
+    dmenu -l 4 -p "Volume" <<-EOF
+100
+75
+50
+25
+EOF
+}
+
+choose_shuffle() {
+    dmenu -l 2 -p "Shuffle?" <<-EOF
+Yes
+No
+EOF
+}
+
+# Stream feature
+stream() {
+    local stream_type=$(choose_stream_type)
+    local song_urls
+    local loop_type
+    if [ "${stream_type}" = "single" ]; then
+        song_urls=$(cat < "${PLAYLIST_DIR}/$(ls ${PLAYLIST_DIR} | dmenu -l 15)" \
+            | dmenu -l 15 \
+            | sed "${URL_GRABBER}")
+
+        #echo "song_url: $song_url"
+        volume="$(choose_volume)"
+        mpv "${song_urls}" --loop --no-video --volume="${volume}" --really-quiet
+    else
+        song_urls=$(cat < "${PLAYLIST_DIR}/$(ls ${PLAYLIST_DIR} | dmenu -l 15)" \
+            | sed "${URL_GRABBER}")
+
+        #echo "song_urls: $song_urls"
+        volume="$(choose_volume)"
+        if [ "$(choose_shuffle)" = "Yes" ]; then
+            shuffle="--shuffle"
+        else
+            shuffle=""
+        fi
+        echo "${song_urls}" \
+            | mpv --playlist=- --loop-playlist --no-video --volume="${volume}" "${shuffle}" --really-quiet
+    fi
+
+    #if [ -z "${song_urls}" ]; then
+    #    errnexit "No song urls found"
+    #fi
+
+    #echo "volume: ${volume}"
+}
+
+main() {
+    option=$(choose_option)
+
+    case "${option}" in
+        "stream")
+            stream
+            ;;
+        *);;
+    esac
+}
+
+main
