@@ -11,5 +11,6 @@
 !.config
 !patches-dwm
 !patches-dmenu
+!patches-st
 !/openbsd
 !/.vim
